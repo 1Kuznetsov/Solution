@@ -1,5 +1,6 @@
 import requests
-
+import time
+start_time = time.time()
 
 search = input()
 gender = input()
@@ -7,12 +8,14 @@ gender = input()
 url = 'https://www.lamoda.ru/catalogsearch/result/?q=' + search +'&submit=y&gender_section=' + gender
 r = requests.get(url)
 text = r.text
+
 count = ''
-prices = []
 articles = []
 names = []
 brands = []
+prices = []
 discounts = []
+countries = []
 data = ''
 
 for k in range(len(text)):
@@ -26,59 +29,82 @@ for k in range(len(text)):
             else:
                 break
 
+count = int(count)
 
-if int(count) % 60 == 0:
-    pages = int(count) // 60
+if count % 60 == 0:
+    pages = count // 60
 else:
-    pages = int(count) // 60 + 1
+    pages = count // 60 + 1
+
+last = count % 60
 
 for t in range(1, pages + 1):
     if t != 1:
         cur_url = url + '&page=' + str(t)
         r = requests.get(cur_url)
         text = r.text
-    for i in range(len(text)):
-        ptr_1 = text[i:i + 15]
-        ptr_2 = text[i:i + 13]
-        ptr_3 = text[i:i + 14]
-        ptr_4 = text[i:i + 12]
-        ptr_5 = text[i:i + 11]
-        if ptr_1 == '\"price_amount\":':
-            for j in range(i + 15, len(text)):
-                if text[j].isdigit():
-                    data += text[j]
-                elif data == '':
-                    continue
-                else:
-                    prices.append(data)
-                    data = ''
-                    break
-        elif ptr_2 == '\"short_sku\":\"':
-            for j in range(i + 13, len(text)):
-                if text[j] != '\"':
-                    data += text[j]
-                else:
-                    if data not in articles:
-                        articles.append(data)
-                    data = ''
-                    break
-        if ptr_3 == 'product-name\">':
-            for j in range(i + 15, len(text)):
-                if text[j] != '<':
-                    data += text[j]
-                elif data != '':
-                    names.append(data)
-                    data = ''
-                    break
-        elif ptr_4 == 'brand-name\">':
-            for j in range(i + 12, len(text)):
-                if text[j] != '<':
-                    data += text[j]
-                elif data != '':
-                    brands.append(data)
-                    data = ''
-                    break
 
+    text_initial = text
+    index_1 = text_initial.find('\"price_amount\":')
+    text = text_initial[index_1:]
+
+    while '\"price_amount\":' in text:
+        for j in range(15, len(text)):
+            if text[j].isdigit():
+                data += text[j]
+            elif data != '':
+                prices.append(data)
+                data = ''
+                text = text[j:]
+                index_1 = text.find('\"price_amount\":')
+                text = text[index_1:]
+                break
+
+    index_2 = text_initial.find('\"short_sku\":\"')
+    text = text_initial[index_2:]
+
+    while '\"short_sku\":\"' in text:
+        for j in range(13, len(text)):
+            if text[j] != '\"':
+                data += text[j]
+            else:
+                if data not in articles:
+                    articles.append(data)
+                data = ''
+                text = text[j:]
+                index_2 = text.find('\"short_sku\":\"')
+                text = text[index_2:]
+                break
+
+    index_3 = text_initial.find('product-name\">')
+    text = text_initial[index_3:]
+
+    while 'product-name\">' in text:
+        for j in range(14, len(text)):
+            if text[j] != '<':
+                data += text[j]
+            elif data != '':
+                names.append(data)
+                data = ''
+                text = text[j:]
+                index_3 = text.find('product-name\">')
+                text = text[index_3:]
+                break
+
+    index_4 = text_initial.find('brand-name\">')
+    text = text_initial[index_4:]
+
+    while 'brand-name\">' in text:
+        for j in range(12, len(text)):
+            if text[j] != '<':
+                data += text[j]
+            elif data != '':
+                brands.append(data)
+                data = ''
+                text = text[j:]
+                index_4 = text.find('brand-name\">')
+                text = text[index_4:]
+                break
 
 print(count, pages)
 print(text)
@@ -90,3 +116,4 @@ print(len(names))
 print(names)
 print(len(brands))
 print(brands)
+print("--- %s seconds ---" % (time.time() - start_time))
