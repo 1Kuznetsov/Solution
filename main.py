@@ -5,7 +5,8 @@ start_time = time.time()
 search = input()
 gender = input()
 
-url = 'https://www.lamoda.ru/catalogsearch/result/?q=' + search +'&submit=y&gender_section=' + gender
+url = 'https://www.lamoda.ru/catalogsearch/result/?q=' + search + '&submit=y&gender_section=' + gender
+part_url = 'https://www.lamoda.ru/p/'
 r = requests.get(url)
 text = r.text
 
@@ -17,6 +18,7 @@ prices = []
 discounts = []
 countries = []
 data = ''
+links = []
 
 for k in range(len(text)):
     ptr = text[k:k+6]
@@ -38,13 +40,29 @@ else:
 
 last = count % 60
 
-for t in range(1, pages + 1):
+for t in range(1, 2):
     if t != 1:
         cur_url = url + '&page=' + str(t)
         r = requests.get(cur_url)
         text = r.text
 
     text_initial = text
+
+    index_0 = text_initial.find('<a href=\"/p/')
+    text = text_initial[index_0:]
+
+    while '<a href=\"/p/' in text:
+        for j in range(12, len(text)):
+            if text[j] != '\"':
+                data += text[j]
+            else:
+                links.append(part_url + data)
+                data = ''
+                text = text[j:]
+                index_0 = text.find('<a href=\"/p/')
+                text = text[index_0:]
+                break
+
     index_1 = text_initial.find('\"price_amount\":')
     text = text_initial[index_1:]
 
@@ -107,7 +125,7 @@ for t in range(1, pages + 1):
                 break
 
 print(count, pages)
-print(text)
+print(len(links), links)
 print(len(prices))
 print(prices)
 print(len(articles))
