@@ -65,7 +65,7 @@ for t in range(1, 2):
 
     index_1 = text_initial.find('\"price_amount\":')
     text = text_initial[index_1:]
-
+    print(text_initial)
     while '\"price_amount\":' in text:
         for j in range(15, len(text)):
             if text[j].isdigit():
@@ -124,6 +124,39 @@ for t in range(1, 2):
                 text = text[index_4:]
                 break
 
+
+    index_5 = text_initial.find('\"percent\":')
+    text = text_initial[index_5:]
+
+    while '\"percent\":' in text:
+        for j in range(15, len(text)):
+            if text[j].isdigit():
+                data += text[j]
+            elif data != '':
+                discounts.append(data)
+                data = ''
+                text = text[j:]
+                index_5 = text.find('\"percent\":')
+                text = text[index_5:]
+                break
+
+    for i in links:
+        r = requests.get(i)
+        text = r.text
+        # print(text)
+        if '"Страна производства","value":' in text:
+            index_country = text.find('"Страна производства"')
+            text = text[index_country:]
+            index_country_value = text.find('value"')
+            index_country_value_start = text.find(':')
+            index_country_value_end = text.find('}')
+            text = text[index_country_value_start + 2:index_country_value_end - 1]
+            countries.append(text)
+        else:
+            countries.append(None)
+
+
+
 print(count, pages)
 print(len(links), links)
 print(len(prices))
@@ -134,4 +167,6 @@ print(len(names))
 print(names)
 print(len(brands))
 print(brands)
+print(len(countries), len(discounts))
+
 print("--- %s seconds ---" % (time.time() - start_time))
