@@ -127,43 +127,45 @@ for t in range(1, 2):
                 text = text[index_4:]
                 break
 
-    index_5 = text_initial.find('\"percent\":')
-    text = text_initial[index_5:]
-
-    while '\"percent\":' in text:
-        for j in range(15, len(text)):
-            if text[j].isdigit():
-                data += text[j]
-            elif data != '':
-                discounts.append(data)
-                data = ''
-                text = text[j:]
-                index_5 = text.find('\"percent\":')
-                text = text[index_5:]
-                break
-
     for i in links:
         r = requests.get(i)
         text = r.text
-        # print(text)
         if '"Страна производства","value":' in text:
             index_country = text.find('"Страна производства"')
             text = text[index_country:]
             index_country_value = text.find('value"')
             index_country_value_start = text.find(':')
             index_country_value_end = text.find('}')
-            text = text[index_country_value_start + 2:index_country_value_end - 1]
-            countries.append(text)
+            res = text[index_country_value_start + 2:index_country_value_end - 1]
+            countries.append(res)
         else:
             countries.append(None)
+        if 'percent"' in text:
+            index_country = text.find('percent"')
+            text = text[index_country:]
+            index_country_value_start = text.find(':')
+            index_country_value_end = text.find('percent_accumulated')
+            text = int(text[index_country_value_start + 1:index_country_value_end - 2])
+            discounts.append(text)
+        else:
+            discounts.append(None)
+
+# for t in range(len(articles)):
+#     result.append([articles[t], names[t], brands[t], prices[t], countries[t]])
+# result = sorted(result, key=lambda x: x[3])
+#
+# with open('output.txt', 'w') as f_out:
+#     print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.COUNTRY), file=f_out)
+#     for elem in result:
+#         print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(*elem), file=f_out)
+
+
 
 for t in range(len(articles)):
-    result.append([articles[t], names[t], brands[t], prices[t], countries[t]])
+    result.append([articles[t], names[t], brands[t], prices[t], discounts[t], countries[t]])
 result = sorted(result, key=lambda x: x[3])
 
 with open('output.txt', 'w') as f_out:
-    print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.COUNTRY), file=f_out)
+    print('|{:13}| {:31}| {:30}| {:7}| {:6}| {:15}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.DISCOUNT, ru.COUNTRY), file=f_out)
     for elem in result:
-        print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(*elem), file=f_out)
-
-print(result, count, len(articles))
+        print('|{:13}| {:31}| {:30}| {:7}| {:6}| {:15}|'.format(*elem), file=f_out)
