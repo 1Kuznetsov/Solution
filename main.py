@@ -1,9 +1,13 @@
 import requests
-import time
-start_time = time.time()
+import ru_local as ru
 
-search = input()
-gender = input()
+search = input(ru.SEARCH)
+gender = input(ru.GENDER)
+
+if gender == ru.MEN:
+    gender = 'men'
+elif gender == ru.WOMEN:
+    gender = 'women'
 
 url = 'https://www.lamoda.ru/catalogsearch/result/?q=' + search + '&submit=y&gender_section=' + gender
 part_url = 'https://www.lamoda.ru/p/'
@@ -11,18 +15,19 @@ r = requests.get(url)
 text = r.text
 
 count = ''
+data = ''
 articles = []
 names = []
 brands = []
 prices = []
 discounts = []
 countries = []
-data = ''
 links = []
+result = []
 
 for k in range(len(text)):
     ptr = text[k:k+6]
-    if ptr == 'найден':
+    if ptr == ru.FOUND:
         for j in range(k, len(text)):
             if count == '' and not text[j].isdigit():
                 continue
@@ -37,8 +42,6 @@ if count % 60 == 0:
     pages = count // 60
 else:
     pages = count // 60 + 1
-
-last = count % 60
 
 for t in range(1, 2):
     if t != 1:
@@ -65,7 +68,7 @@ for t in range(1, 2):
 
     index_1 = text_initial.find('\"price_amount\":')
     text = text_initial[index_1:]
-    print(text_initial)
+
     while '\"price_amount\":' in text:
         for j in range(15, len(text)):
             if text[j].isdigit():
@@ -97,8 +100,8 @@ for t in range(1, 2):
     index_3 = text_initial.find('product-name\">')
     text = text_initial[index_3:]
 
-    while 'product-name\">' in text:
-        for j in range(14, len(text)):
+    while 'product-name\"> ' in text:
+        for j in range(15, len(text)):
             if text[j] != '<':
                 data += text[j]
             elif data != '':
@@ -123,7 +126,6 @@ for t in range(1, 2):
                 index_4 = text.find('brand-name\">')
                 text = text[index_4:]
                 break
-
 
     index_5 = text_initial.find('\"percent\":')
     text = text_initial[index_5:]
@@ -155,18 +157,13 @@ for t in range(1, 2):
         else:
             countries.append(None)
 
+for t in range(len(articles)):
+    result.append([articles[t], names[t], brands[t], prices[t], countries[t]])
+result = sorted(result, key=lambda x: x[3])
 
+with open('output.txt', 'w') as f_out:
+    print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.COUNTRY), file=f_out)
+    for elem in result:
+        print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(*elem), file=f_out)
 
-print(count, pages)
-print(len(links), links)
-print(len(prices))
-print(prices)
-print(len(articles))
-print(articles)
-print(len(names))
-print(names)
-print(len(brands))
-print(brands)
-print(len(countries), len(discounts))
-
-print("--- %s seconds ---" % (time.time() - start_time))
+print(result, count, len(articles))
