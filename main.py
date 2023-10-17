@@ -1,3 +1,5 @@
+# Kuznetsov Igor - 80 %, Yadreeva Maria - 20 %.
+
 import requests
 import ru_local as ru
 
@@ -28,11 +30,11 @@ result = []
 for k in range(len(text)):
     ptr = text[k:k+6]
     if ptr == ru.FOUND:
-        for j in range(k, len(text)):
-            if count == '' and not text[j].isdigit():
+        for n in range(k, len(text)):
+            if count == '' and not text[n].isdigit():
                 continue
-            elif text[j].isdigit():
-                count += text[j]
+            elif text[n].isdigit():
+                count += text[n]
             else:
                 break
 
@@ -43,9 +45,18 @@ if count % 60 == 0:
 else:
     pages = count // 60 + 1
 
-for t in range(1, 2):
-    if t != 1:
-        cur_url = url + '&page=' + str(t)
+cur_pages = input(ru.PAGES)
+
+try:
+    cur_pages = int(cur_pages) + 1
+    if cur_pages > pages + 1:
+        cur_pages = pages + 1
+except ValueError:
+    cur_pages = pages + 1
+
+for m in range(1, cur_pages):
+    if m != 1:
+        cur_url = url + '&page=' + str(m)
         r = requests.get(cur_url)
         text = r.text
 
@@ -127,45 +138,35 @@ for t in range(1, 2):
                 text = text[index_4:]
                 break
 
-    for i in links:
-        r = requests.get(i)
-        text = r.text
-        if '"Страна производства","value":' in text:
-            index_country = text.find('"Страна производства"')
-            text = text[index_country:]
-            index_country_value = text.find('value"')
-            index_country_value_start = text.find(':')
-            index_country_value_end = text.find('}')
-            res = text[index_country_value_start + 2:index_country_value_end - 1]
-            countries.append(res)
-        else:
-            countries.append(None)
-        if 'percent"' in text:
-            index_country = text.find('percent"')
-            text = text[index_country:]
-            index_country_value_start = text.find(':')
-            index_country_value_end = text.find('percent_accumulated')
-            text = int(text[index_country_value_start + 1:index_country_value_end - 2])
-            discounts.append(text)
-        else:
-            discounts.append(None)
-
-# for t in range(len(articles)):
-#     result.append([articles[t], names[t], brands[t], prices[t], countries[t]])
-# result = sorted(result, key=lambda x: x[3])
-#
-# with open('output.txt', 'w') as f_out:
-#     print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.COUNTRY), file=f_out)
-#     for elem in result:
-#         print('|{:13}| {:35}| {:30}| {:7}| {:20}|'.format(*elem), file=f_out)
-
-
+for i in links:
+    r = requests.get(i)
+    text = r.text
+    if ru.COUNTRY_OF_MANUFACTURE in text:
+        index_country = text.find(ru.MANUFACTURE)
+        text = text[index_country:]
+        index_country_value = text.find('value\"')
+        index_country_value_start = text.find(':')
+        index_country_value_end = text.find('}')
+        res = text[index_country_value_start + 2:index_country_value_end - 1]
+        countries.append(res)
+    if 'percent\"' in text:
+        index_country = text.find('percent\"')
+        text = text[index_country:]
+        index_country_value_start = text.find(':')
+        index_country_value_end = text.find('percent_accumulated')
+        text = int(text[index_country_value_start + 1:index_country_value_end - 2])
+        discounts.append(text)
+    else:
+        discounts.append(0)
+        continue
 
 for t in range(len(articles)):
     result.append([articles[t], names[t], brands[t], prices[t], discounts[t], countries[t]])
-result = sorted(result, key=lambda x: x[3])
+
+result = sorted(result, key=lambda x: int(x[3]))
 
 with open('output.txt', 'w') as f_out:
-    print('|{:13}| {:31}| {:30}| {:7}| {:6}| {:15}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND, ru.PRICE, ru.DISCOUNT, ru.COUNTRY), file=f_out)
+    print('|{:13}| {:40}| {:40}| {:7}| {:<9}| {:20}|'.format(ru.ARTICLE, ru.NAME, ru.BRAND,
+                                                             ru.PRICE, ru.DISCOUNT, ru.COUNTRY), file=f_out)
     for elem in result:
-        print('|{:13}| {:31}| {:30}| {:7}| {:6}| {:15}|'.format(*elem), file=f_out)
+        print('|{:13}| {:40}| {:40}| {:7}| {:<9}| {:20}|'.format(*elem), file=f_out)
